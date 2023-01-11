@@ -3,6 +3,8 @@
 [X] take cmd line params
 [X] run search
 [X] paginate search results
-[ ] create collection
+[X] create collection
 [ ] remove links
-[ ] post items
+[X] post items
+[ ] bulk (ItemCollection) write option
+[ ] async / concurrent writing
