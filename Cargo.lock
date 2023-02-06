@@ -1316,7 +1316,6 @@ dependencies = [
  "assert_cmd",
  "clap",
  "reqwest",
- "serde",
  "serde_json",
  "stac",
  "tokio",
