@@ -1,6 +1,7 @@
+#![deny(unused_extern_crates)]
+
 use clap::Parser;
-use serde::{Deserialize, Serialize};
-use stac::{Collection, Item, Link};
+use stac::{Collection, Item, ItemCollection};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -13,27 +14,6 @@ pub struct Args {
 
     #[arg(short, long, default_value_t = true)]
     bulk: bool,
-}
-
-// replace with stac-rs struct when links is made public
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-struct ItemCollection {
-    /// The type field.
-    ///
-    /// Must be set to "FeatureCollection".
-    r#type: String,
-
-    /// The list of [Items](Item).
-    ///
-    /// The attribute is actually "features", but we rename to "items".
-    #[serde(rename = "features")]
-    items: Vec<Item>,
-
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    links: Vec<Link>,
-
-    #[serde(skip)]
-    href: Option<String>,
 }
 
 struct SearchResultItems {
@@ -91,7 +71,6 @@ impl Iterator for SearchResultItems {
 }
 
 pub fn run(collection_url: &str, src: &str) -> Result<(), Box<dyn std::error::Error>> {
-
     let (collections_url, collection_id) = match collection_url.rsplit_once('/') {
         Some((a, b)) => (a, b),
         _ => panic!("Could not parse dst collection URI for collection ID"),
@@ -106,10 +85,7 @@ pub fn run(collection_url: &str, src: &str) -> Result<(), Box<dyn std::error::Er
 
     match res {
         // todo: handle 409
-        Err(e) => panic!(
-            "Could not create dst collection: {:?}",
-            e
-        ),
+        Err(e) => panic!("Could not create dst collection: {:?}", e),
         _ => (),
     }
 
@@ -117,12 +93,10 @@ pub fn run(collection_url: &str, src: &str) -> Result<(), Box<dyn std::error::Er
 
     for result in SearchResultItems::of(&src)? {
         match result {
-            Ok(item) => {
-                match client.post(&collection_items_url).json(&item).send() {
-                    Err(e) => panic!("Failure creating new item: {:?}", e),
-                    _ => println!("Success creating item: {}", item.id),
-                }
-            }
+            Ok(item) => match client.post(&collection_items_url).json(&item).send() {
+                Err(e) => panic!("Failure creating new item: {:?}", e),
+                _ => println!("Success creating item: {}", item.id),
+            },
             Err(_) => println!("error"),
         }
     }
